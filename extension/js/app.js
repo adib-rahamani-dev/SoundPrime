@@ -209,18 +209,20 @@
     points.forEach((v, n) => { const h = Math.max(3, v * 74); ctx.fillRect(n * 6.2, (80 - h) / 2, 3.4, h); });
   }
   function stop() {
-    if (audio) { audio.pause(); audio.src = ''; audio = null; }
+    if (audio) { audio.onended = null; audio.onerror = null; audio.pause(); audio.removeAttribute('src'); audio.load(); audio = null; }
     playing = -1; $('now-playing').textContent = 'صدایی در حال پخش نیست'; render();
   }
   async function preview(i) {
     if (playing === i) { stop(); return; }
     stop();
+    let current;
     try {
-      audio = new Audio(getURL(i)); audio.volume = state.volume; playing = i;
-      audio.addEventListener('ended', stop);
-      audio.addEventListener('error', () => { stop(); toast('پیش‌شنوی این فرمت ممکن نشد؛ WAV یا MP3 را امتحان کنید.', true); });
-      await audio.play(); $('now-playing').textContent = state.slots[i].name; render();
-    } catch (e) { stop(); toast(e.message, true); }
+      current = new Audio(getURL(i)); audio = current; audio.volume = state.volume; playing = i;
+      current.onended = () => { if (audio === current) stop(); };
+      current.onerror = () => { if (audio === current) { stop(); toast('پیش‌شنوی این فرمت ممکن نشد؛ WAV یا MP3 را امتحان کنید.', true); } };
+      await current.play();
+      if (audio === current) { $('now-playing').textContent = state.slots[i].name; render(); }
+    } catch (e) { if (!current || audio === current) { stop(); toast(e.message, true); } }
   }
   async function place(i) {
     const s = state.slots[i];

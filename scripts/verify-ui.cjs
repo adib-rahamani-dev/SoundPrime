@@ -38,6 +38,8 @@ function wave() {
     assert.equal(await page.locator('.shortcut').first().textContent(), 'Ctrl + Alt + M');
     await page.locator('.preview').first().click();
     await page.waitForFunction(() => document.querySelector('#now-playing').textContent.includes('صدای تست'));
+    await page.locator('.preview').nth(1).click();
+    await page.waitForFunction(() => document.querySelector('#now-playing').textContent === 'Test click');
     await page.locator('#stop').click();
     const xml = '<PremiereData><platform>windows</platform><item.0><commandname>cmd.test.conflict</commandname><modifier.ctrl>true</modifier.ctrl><modifier.alt>true</modifier.alt><virtualkey>2147483725</virtualkey></item.0></PremiereData>';
     await page.locator('#kys-file').setInputFiles({name:'test.kys', mimeType:'text/xml', buffer:Buffer.from(xml)});
