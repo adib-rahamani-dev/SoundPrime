@@ -4,6 +4,7 @@ const vm = require('node:vm');
 const fs = require('node:fs');
 function setup(options = {}) {
   const item = {type: 1, name: 'impact.wav', getMediaPath: () => 'C:\\impact.wav', getInPoint: () => ({seconds: 0}), getOutPoint: () => ({seconds: options.duration ?? 2}), getAudioChannelMapping: () => ({audioClipsNumber: options.audioClips ?? 1, audioChannelsType: options.audioType ?? 1})};
+  if (options.mappingStyle !== 'method') item.getAudioChannelMapping = options.mappingStyle === 'missing' ? undefined : {audioClipsNumber: options.audioClips ?? 1, audioChannelsType: options.audioType ?? 1};
   const clips = (options.clips || []).slice(); clips.numItems = clips.length;
   let calls = [];
   const track = {name: 'Audio 1', isLocked: () => !!options.locked, clips,
@@ -24,6 +25,16 @@ test('placement uses only target audio track at playhead, and imports on demand'
     assert.equal(JSON.parse(host.place('C:\\impact.wav', 0)).ok, true);
     assert.equal(calls.length, 1); assert.equal(calls[0].at, 5);
   }
+});
+test('Windows regression: property-style channel mapping is not called as a function', () => {
+  for (const mappingStyle of ['property', 'method']) {
+    const {host,calls} = setup({mappingStyle});
+    const result = JSON.parse(host.place('C:\\impact.wav',0));
+    assert.equal(result.ok,true, result.error); assert.equal(calls.length,1);
+  }
+  const {host,calls} = setup({mappingStyle:'missing'});
+  const result = JSON.parse(host.place('C:\\impact.wav',0));
+  assert.equal(result.ok,false); assert.doesNotMatch(result.error,/not a function/); assert.equal(calls.length,0);
 });
 test('overlap, missing file, locked track and invalid destinations do not overwrite', () => {
   for (const options of [{clips: [{start:{seconds:6},end:{seconds:10}}]}, {exists:false}, {locked:true}, {noSequence:true}, {duration:0}]) {

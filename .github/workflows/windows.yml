@@ -52,4 +52,4 @@ jobs:
       - name: Publish platform packages
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" dist/*.zip --verify-tag --title "OTINER $GITHUB_REF_NAME" --notes-file docs/release-1.2.0.md
+        run: gh release create "$GITHUB_REF_NAME" dist/*.zip --verify-tag --title "OTINER $GITHUB_REF_NAME" --notes-file "docs/release-${GITHUB_REF_NAME#v}.md"

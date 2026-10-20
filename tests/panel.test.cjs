@@ -39,7 +39,7 @@ test('OTINER branding and direct rename work independently of shortcut conflicts
   const p = panel();
   try {
     assert.equal(p.w.document.title, 'OTINER');
-    assert.match(p.$('.brand').textContent, /^OTINER/);
+    assert.equal(p.$('.brand h1').textContent, 'OTINER');
     assert.equal(p.all('.pad').length, 9);
     p.upload('conflict.kys', '#kys-file', '<PremiereData><platform>windows</platform><item.0><commandname>cmd.conflict</commandname><modifier.ctrl>true</modifier.ctrl><modifier.shift>true</modifier.shift><virtualkey>2147483697</virtualkey></item.0></PremiereData>');
     await tick();
@@ -112,5 +112,26 @@ test('Mac panel captures Command and checks the active Mac KYS without Windows l
     p.upload('mac.kys', '#kys-file', '<PremiereData><platform>macintosh</platform><item.0><virtualkey>2147483725</virtualkey><modifier.command>true</modifier.command><modifier.opt>true</modifier.opt><commandname>cmd.mac.test</commandname></item.0></PremiereData>');
     await tick();
     assert.equal(p.$('.status').textContent, 'تداخل پریمیر');
+  } finally { p.close(); }
+});
+test('reference-style light/dark theme persists and search/filter keep sound indices intact', async () => {
+  const p = panel();
+  try {
+    assert.equal(p.w.document.documentElement.dataset.theme, 'light');
+    p.upload('impact.wav'); await tick();
+    p.$('[data-filter="loaded"]').click();
+    assert.equal(p.all('.pad').filter(el=>!el.hidden).length, 1);
+    p.$('[data-filter="empty"]').click();
+    assert.equal(p.all('.pad').filter(el=>!el.hidden).length, 8);
+    p.$('[data-filter="all"]').click();
+    p.$('#search').value = 'impact'; p.$('#search').dispatchEvent(new p.w.Event('input'));
+    assert.equal(p.all('.pad').filter(el=>!el.hidden).length, 1);
+    p.$('#search').value = 'not-found'; p.$('#search').dispatchEvent(new p.w.Event('input'));
+    assert.equal(p.$('#no-results').hidden, false);
+    p.$('#theme').click();
+    assert.equal(p.w.document.documentElement.dataset.theme, 'dark');
+    const restored = panel(p.w.localStorage.getItem('soundprime-bank'));
+    try { assert.equal(restored.w.document.documentElement.dataset.theme, 'dark'); }
+    finally { restored.close(); }
   } finally { p.close(); }
 });

@@ -4,7 +4,7 @@
 
 ## نصب از بستهٔ آماده
 
-۱. فایل **OTINER-1.2.0-macOS-Universal.zip** را از [Releases](https://github.com/adib-rahamani-dev/SoundPrime/releases) بگیرید و با Archive Utility کامل Extract کنید.
+۱. فایل **OTINER-1.3.0-macOS-Universal.zip** را از [Releases](https://github.com/adib-rahamani-dev/SoundPrime/releases) بگیرید و با Archive Utility کامل Extract کنید.
 
 ۲. پریمیر را کامل Quit کنید. داخل پوشهٔ **OTINER**، فایل **Install.command** را باز کنید. نصب فقط برای کاربر جاری و بدون sudo انجام می‌شود؛ برای بستهٔ آماده نیازی به Xcode، Node یا Rosetta نیست.
 

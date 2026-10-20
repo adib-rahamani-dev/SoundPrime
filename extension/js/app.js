@@ -18,6 +18,7 @@
   let peaks = new Map(), browserFiles = new Map(), playing = -1, lastPreview = -1, busy = false;
   let editing = -1, pendingShortcut = null, modalFocus = null, sequence = null, missing = new Set();
   let toastTimer, dialogKeyHandler = null, lastHeartbeat = 0, helperFailed = false;
+  let activeFilter = 'all', searchQuery = '';
   function toast(message, error) {
     $('toast').textContent = message; $('toast').classList.toggle('error', !!error); $('toast').hidden = false;
     clearTimeout(toastTimer); toastTimer = setTimeout(() => { $('toast').hidden = true; }, 4600);
@@ -140,6 +141,9 @@
   }
   function render() {
     const pads = $('pads'); pads.textContent = '';
+    document.documentElement.dataset.theme = state.theme;
+    $('theme').textContent = state.theme === 'dark' ? 'تم روشن' : 'تم تیره';
+    $('theme').setAttribute('aria-pressed', String(state.theme === 'dark'));
     $('count').textContent = String(state.slots.filter(s => s.path).length).padStart(2, '0') + ' / 09';
     $('volume').value = Math.round(state.volume * 100); $('volume-value').textContent = $('volume').value + '%';
     $('enabled').setAttribute('aria-pressed', String(state.enabled));
@@ -179,6 +183,19 @@
       if (s.path) { if (peaks.has(s.path)) drawWave(i); else decode(i); }
     });
     renderStatus();
+    filterPads();
+  }
+  function filterPads() {
+    let visible = 0;
+    document.querySelectorAll('.pad').forEach((el, i) => {
+      const s = state.slots[i];
+      const category = activeFilter === 'all' || (activeFilter === 'loaded' ? !!s.path : !s.path);
+      const text = (s.name + ' ' + s.path.split(/[\\/]/).pop()).toLocaleLowerCase();
+      el.hidden = !(category && (!searchQuery || text.includes(searchQuery)));
+      if (!el.hidden) visible++;
+    });
+    $('no-results').hidden = visible > 0;
+    document.querySelectorAll('[data-filter]').forEach(el => el.setAttribute('aria-pressed', String(el.dataset.filter === activeFilter)));
   }
   function getURL(i) {
     const p = state.slots[i].path;
@@ -213,8 +230,8 @@
   function drawWave(i) {
     const canvas = document.querySelector('canvas[data-slot="' + i + '"]'); if (!canvas) return;
     const ctx = canvas.getContext('2d'), points = peaks.get(state.slots[i].path);
-    ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.fillStyle = '#dce98a';
-    if (!points) { ctx.fillStyle = '#4a4e36'; ctx.fillRect(0, 39, canvas.width, 2); return; }
+    ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.fillStyle = state.theme === 'dark' ? '#ffd800' : '#786500';
+    if (!points) { ctx.fillStyle = state.theme === 'dark' ? '#68686e' : '#a3a3a9'; ctx.fillRect(0, 39, canvas.width, 2); return; }
     points.forEach((v, n) => { const h = Math.max(3, v * 74); ctx.fillRect(n * 6.2, (80 - h) / 2, 3.4, h); });
   }
   function stop() {
@@ -349,6 +366,9 @@
     } catch (e) { $('connection').textContent = 'PREMIERE NOT RESPONDING'; $('connection-dot').classList.add('muted'); }
   }
   $('import').onclick = () => chooseAudio(null);
+  $('theme').onclick = () => { state.theme = state.theme === 'dark' ? 'light' : 'dark'; save(); render(); };
+  $('search').oninput = e => { searchQuery = e.target.value.trim().toLocaleLowerCase(); filterPads(); };
+  document.querySelectorAll('[data-filter]').forEach(el => el.onclick = () => { activeFilter = el.dataset.filter; filterPads(); });
   $('audio-files').onchange = e => { pauseNative(false); addFiles(Array.from(e.target.files), importTarget); e.target.value = ''; };
   window.addEventListener('focus', () => { if ($('modal').hidden) pauseNative(false); });
   $('enabled').onclick = () => { state.enabled = !state.enabled; save(); render(); };

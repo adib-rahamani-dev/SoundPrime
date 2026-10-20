@@ -1,20 +1,36 @@
 <!doctype html>
-<html lang="fa">
+<html lang="fa" data-theme="light">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' file: blob:; script-src 'self'; style-src 'self'; img-src 'self' data: blob: file:; media-src 'self' blob: file:; connect-src 'none'; object-src 'none'">
-  <title>OTINER</title><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="otiner.css">
+  <title>OTINER</title><link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <div class="app">
-  <header class="topbar"><a class="brand" href="#" aria-label="OTINER"><span>OTINER<span class="brand-sub">YOUR SOUND. YOUR SIGNATURE.</span></span></a><span class="edition">PREMIERE PRO <b>09 PADS</b></span><button id="help" class="icon-button" title="راهنما" aria-label="راهنما">?</button></header>
-  <main>
-    <section class="hero"><div><div class="eyebrow"><span class="live-dot"></span> THE SOUND IS YOURS.</div><h1 dir="rtl">بشنو. انتخاب کن.<br><span>به تصویر جان بده.</span></h1><p dir="rtl">پیش‌شنوی، اسم دلخواه، یک میان‌بر تا تایم‌لاین.</p></div><div class="hero-note" dir="rtl"><span>۰۹</span><p>صدا در دسترس<br>بی‌وقفه خلق کن.</p></div></section>
-    <section class="session-bar" aria-label="تنظیمات تایم‌لاین"><div class="connection"><span id="connection-dot" class="live-dot muted"></span><span id="connection">CONNECTING</span></div><label class="track-label">TARGET <select id="track" aria-label="ترک صوتی مقصد"><option value="0">A1</option></select></label><button id="enabled" class="toggle" aria-pressed="true">⌘ <span>میان‌برها روشن</span></button></section>
-    <section class="library"><div class="section-heading"><div><h2>YOUR SOUNDS <span id="count">00 / 09</span></h2><p dir="rtl">موج را لمس کن تا بشنوی؛ نام را بزن تا عوضش کنی.</p></div><button id="import" class="primary">＋ <span>افزودن صدا</span></button></div><div id="pads" class="pads" aria-label="۹ پد ساند افکت"></div></section>
-    <section class="monitor" aria-label="پخش‌کنندهٔ پیش‌شنوی"><div class="monitor-header"><div class="monitor-title"><span class="eyebrow">PREVIEW</span><span id="now-playing" dir="auto">یک صدا را برای شنیدن انتخاب کن</span></div><button id="preview-play" class="transport" disabled aria-label="پخش یا مکث پیش‌شنوی">پخش</button><button id="stop" class="transport" aria-label="توقف پیش‌شنوی">توقف</button></div><div class="monitor-controls"><output id="preview-time">0:00 / 0:00</output><input id="preview-position" type="range" min="0" max="1000" value="0" disabled aria-label="موقعیت پیش‌شنوی"><label class="volume-label"><span>VOL</span><input id="volume" type="range" min="0" max="100" value="70" aria-label="بلندی پیش‌شنوی"><output id="volume-value">70%</output></label></div></section>
-    <footer><span>OTINER <span class="yellow">/</span> MADE FOR YOUR FLOW</span><div><button id="kys">بررسی میان‌بر پریمیر</button><button id="export-bank">ذخیره بانک</button><button id="import-bank">بازیابی بانک</button></div><span>v1.2.0</span></footer>
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="OTINER">
+      <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="10" fill="#FFD800"/><circle cx="15" cy="17" r="6.6" fill="none" stroke="#151517" stroke-width="2.4"/><circle cx="23" cy="9" r="2.2" fill="#151517"/></svg>
+      <span class="brand-text"><h1>OTINER</h1><span class="eyebrow">YOUR SOUND LIBRARY</span></span>
+    </a>
+    <div class="header-actions"><button id="theme" class="small-button" aria-label="تغییر تم">تم تیره</button><button id="help" class="icon-button" title="راهنما" aria-label="راهنما">?</button></div>
+  </header>
+  <section class="session-bar" aria-label="وضعیت پریمیر">
+    <div class="connection"><span id="connection-dot" class="live-dot muted"></span><span id="connection">CONNECTING</span></div>
+    <label class="track-label">TRACK <select id="track" aria-label="ترک صوتی مقصد"><option value="0">A1</option></select></label>
+    <button id="enabled" class="toggle" aria-pressed="true"><span>میان‌برها روشن</span></button>
+  </section>
+  <div class="tools"><label class="search"><span class="search-label" dir="rtl">جستجو</span><input id="search" type="search" dir="auto" placeholder="اسم صدا…" aria-label="جستجوی صدا" autocomplete="off"></label><button id="import" class="primary">＋ افزودن صدا</button></div>
+  <nav class="rail" aria-label="فیلتر صداها"><button data-filter="all" aria-pressed="true">همه <span id="count">00 / 09</span></button><button data-filter="loaded" aria-pressed="false">صداهای من</button><button data-filter="empty" aria-pressed="false">جای خالی</button></nav>
+  <main class="library">
+    <div id="pads" class="pads" aria-label="۹ پد ساند افکت"></div>
+    <p id="no-results" class="no-results" dir="rtl" hidden>صدایی با این اسم پیدا نشد.</p>
+    <div class="library-note" dir="rtl">فایل را روی کارت رها کن؛ برای تغییر اسم، روی نام بزن.</div>
+    <footer class="utilities"><div><button id="kys">بررسی میان‌بر</button><button id="export-bank">ذخیره بانک</button><button id="import-bank">بازیابی بانک</button></div><span>v1.3.0</span></footer>
   </main>
+  <section class="monitor" aria-label="پخش‌کنندهٔ پیش‌شنوی">
+    <div class="monitor-header"><div class="monitor-title"><span class="eyebrow">PREVIEW</span><span id="now-playing" dir="auto">یک صدا انتخاب کن</span></div><button id="preview-play" class="transport" disabled aria-label="پخش یا مکث پیش‌شنوی">پخش</button><button id="stop" class="transport" aria-label="توقف پیش‌شنوی">توقف</button></div>
+    <div class="monitor-controls"><output id="preview-time">0:00 / 0:00</output><input id="preview-position" type="range" min="0" max="1000" value="0" disabled aria-label="موقعیت پیش‌شنوی"><label class="volume-label"><span>VOL</span><input id="volume" type="range" min="0" max="100" value="70" aria-label="بلندی پیش‌شنوی"><output id="volume-value">70%</output></label></div>
+  </section>
   <div id="toast" role="status" aria-live="polite" hidden></div>
 </div>
 <div id="modal" class="modal" hidden><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title" dir="rtl"><button id="close-dialog" class="close icon-button" aria-label="بستن">×</button><div id="dialog-body"></div></section></div>

@@ -1,12 +1,14 @@
 # OTINER
 
-**OTINER** — پنل ۹ پد ساند افکت برای **Adobe Premiere Pro 2024، ویندوز و macOS** با تم زرد لیمویی و تیره.
+**OTINER** — پنل ۹ پد ساند افکت برای **Adobe Premiere Pro 2024، ویندوز و macOS** با زرد خالص و تم روشن/تیره.
+
+نسخهٔ **۱٫۳**: ظاهر مینیمال بر اساس مرجع OtinerPresetStudio، تم روشن/تیره، جستجو و فیلتر صداها. خطای `getAudioChannelMapping() is not a function` با پشتیبانی از حالت آبجکت و تابع برطرف شده است. [دانلود نسخهٔ جدید](https://github.com/adib-rahamani-dev/SoundPrime/releases/latest)
 
 
 
 ## نسخهٔ مک — Intel و Apple Silicon
 
-بستهٔ **OTINER-1.2.0-macOS-Universal.zip** را از [Releases](https://github.com/adib-rahamani-dev/SoundPrime/releases) بگیرید، Extract کنید و با پریمیر بسته، **Install.command** را باز کنید. هدف macOS 12+ و Premiere 24.x است؛ بسته شامل باینری هر دو معماری است. میان‌برها با **Cmd+Shift+1…9** شروع می‌شوند. [راهنمای نصب مک، Gatekeeper، فایل KYS و حذف](docs/macOS.md)
+بستهٔ **OTINER-1.3.0-macOS-Universal.zip** را از [Releases](https://github.com/adib-rahamani-dev/SoundPrime/releases) بگیرید، Extract کنید و با پریمیر بسته، **Install.command** را باز کنید. هدف macOS 12+ و Premiere 24.x است؛ بسته شامل باینری هر دو معماری است. میان‌برها با **Cmd+Shift+1…9** شروع می‌شوند. [راهنمای نصب مک، Gatekeeper، فایل KYS و حذف](docs/macOS.md)
 
 این نسخه امضای Developer ID و notarization ندارد. ساخت Universal و تست‌های CLI مک در CI انجام می‌شوند؛ **درج واقعی صدا و میان‌بر داخل پریمیرِ مک هنوز تأیید نشده‌اند**.
 
@@ -69,7 +71,7 @@ npm run install:plugin
 
 تست واقعی ثبت کلید در ویندوز: `powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/verify-native.ps1` پس از build. تست اختیاری رابط با نصب Playwright و مرورگر آن: `node scripts/verify-ui.cjs`. مسیر ماژول و مرورگر موجود را می‌توان با `SOUNDPRIME_PLAYWRIGHT` و `SOUNDPRIME_BROWSER` تعیین کرد. تست رابط فایل‌های صوتی مصنوعی در حافظه می‌سازد و اسکرین‌شات خروجی در `artifacts` می‌گذارد.
 
-بستهٔ خروجی: `dist/OTINER-1.2.0-Windows.zip`. روی مک، `npm run build:mac` فایل `dist/OTINER-1.2.0-macOS-Universal.zip` را می‌سازد. اکشن گیت‌هاب هر دو بسته را تولید می‌کند. تست‌های خودکار شامل تداخل بانک، خواندن KYS، اعتبارسنجی بازیابی و قراردادهای درج در میزبان شبیه‌سازی‌شده‌اند؛ جای تست واقعی تدوین با پریمیر را نمی‌گیرند.
+بستهٔ خروجی: `dist/OTINER-1.3.0-Windows.zip`. روی مک، `npm run build:mac` فایل `dist/OTINER-1.3.0-macOS-Universal.zip` را می‌سازد. اکشن گیت‌هاب هر دو بسته را تولید می‌کند. تست‌های خودکار شامل تداخل بانک، خواندن KYS، اعتبارسنجی بازیابی و قراردادهای درج در میزبان شبیه‌سازی‌شده‌اند؛ جای تست واقعی تدوین با پریمیر را نمی‌گیرند.
 
 ساختار: `extension/js` پنل و داده‌ها، `extension/jsx` ارتباط ExtendScript، `extension/native` همراه C# و `installer` نصب و حذف. فایل صوتی کاربر، تنظیمات محلی و باینری خروجی وارد Git نمی‌شوند.
 

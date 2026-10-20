@@ -5,7 +5,7 @@
 }(this, function () {
   'use strict';
   function defaults(isMac) {
-    return { version: 1, volume: 0.7, track: 0, enabled: true, kysPath: '', slots: Array.from({length: 9}, function (_, i) {
+    return { version: 1, theme: 'light', volume: 0.7, track: 0, enabled: true, kysPath: '', slots: Array.from({length: 9}, function (_, i) {
       return { name: '', path: '', duration: 0, shortcut: { key: 49 + i, modifiers: isMac ? 12 : 6 } };
     }) };
   }
@@ -25,6 +25,7 @@
   function normalize(data, isMac) {
     if (!data || data.version !== 1 || !Array.isArray(data.slots) || data.slots.length !== 9) throw new Error('فایل بانک صدا معتبر نیست.');
     var out = defaults(isMac);
+    out.theme = data.theme === 'dark' ? 'dark' : 'light';
     out.volume = Number.isFinite(data.volume) ? Math.max(0, Math.min(1, data.volume)) : 0.7;
     out.track = Number.isInteger(data.track) && data.track >= 0 ? data.track : 0;
     out.enabled = data.enabled !== false;

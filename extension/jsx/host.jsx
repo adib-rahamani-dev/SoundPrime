@@ -46,8 +46,10 @@ var SoundPrime = (function () {
                 item = find(bin, file.fsName);
             }
             if (!item) return fail('صدای واردشده در پروژه پیدا نشد.');
-            var mapping = item.getAudioChannelMapping();
-            if (!mapping || mapping.audioClipsNumber !== 1 || (mapping.audioChannelsType !== 0 && mapping.audioChannelsType !== 1))
+            // Adobe's PProPanel sample reads this as a property; some host versions expose a method.
+            var mapping = item.getAudioChannelMapping;
+            if (typeof mapping === 'function') mapping = item.getAudioChannelMapping();
+            if (!mapping || Number(mapping.audioClipsNumber) !== 1 || (Number(mapping.audioChannelsType) !== 0 && Number(mapping.audioChannelsType) !== 1))
                 return fail('برای درج امن، صدا باید یک کلیپ مونو یا استریو باشد؛ تنظیم Audio Channels منبع را بررسی کنید.');
             var start = seq.getPlayerPosition().seconds;
             var duration = item.getOutPoint(2).seconds - item.getInPoint(2).seconds;
