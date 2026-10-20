@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const {JSDOM} = require('jsdom');
 const fs = require('node:fs');
 const path = require('node:path');
-test('CEP on macOS uses the Mac data directory, native binary and Cmd bindings', () => {
+test('CEP on macOS uses the Mac data directory, native binary and Cmd bindings', async () => {
   const dom = new JSDOM(fs.readFileSync('extension/index.html','utf8'), {url:'file:///opt/OTINER/extension/index.html',runScripts:'outside-only'});
   const writes = new Map(); let launched;
   const fakeFS = {
@@ -23,10 +23,10 @@ test('CEP on macOS uses the Mac data directory, native binary and Cmd bindings',
   try {
     w.eval(fs.readFileSync('extension/js/core.js','utf8')); w.eval(fs.readFileSync('extension/js/app.js','utf8'));
     assert.equal(launched.exe, '/opt/OTINER/extension/bin/OTINER.Hotkeys');
-    assert.deepEqual(launched.args, ['/tmp/soundprime-test']);
+    assert.deepEqual(Array.from(launched.args), ['/tmp/soundprime-test']);
     assert.match(writes.get('/tmp/soundprime-test/keys.tsv'), /^0\t12\t49/);
     w.document.querySelector('#enabled').click();
     assert.ok(writes.has('/Users/test/Library/Application Support/OTINER/bank.json'));
     assert.equal(writes.get('/tmp/soundprime-test/keys.tsv'), '');
-  } finally { w.close(); }
+  } finally { await new Promise(resolve => setImmediate(resolve)); w.close(); }
 });
