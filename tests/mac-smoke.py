@@ -66,7 +66,7 @@ else: sys.exit(1)
 """)
     defaults.chmod(0o755)
     pgrep = shim / "pgrep"
-    pgrep.write_text("#!/bin/sh\nexit 1\n")
+    pgrep.write_text("#!/bin/sh\nif [ \"${OTINER_TEST_PREMIERE_RUNNING:-0}\" = 1 ]; then exit 0; fi\nexit 1\n")
     pgrep.chmod(0o755)
     for n, prior in enumerate([None, {"value": "0", "type": "integer"}, {"value": "false", "type": "boolean"}, {"value": "custom", "type": "string"}]):
         home = temp / f"home with spaces {n}"
@@ -92,6 +92,9 @@ else: sys.exit(1)
             assert not prefs.exists()
         else:
             assert json.loads(prefs.read_text()) == prior
+        blocked_env = dict(env, OTINER_TEST_PREMIERE_RUNNING="1")
+        assert subprocess.run(install, env=blocked_env).returncode != 0
+        assert not target.exists()
     print("Mac installer: spaced paths, reinstall/backup, removal, bank retention and preference restoration passed (isolated preference shim).")
 
 

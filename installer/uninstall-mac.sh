@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 [[ "$(uname -s)" == Darwin ]] || { echo 'This uninstaller is for macOS.' >&2; exit 1; }
-if pgrep -x 'Adobe Premiere Pro' >/dev/null; then echo 'Close Premiere Pro before uninstalling.' >&2; exit 1; fi
+if pgrep -f '/Contents/MacOS/Adobe Premiere Pro( [0-9]{4})?($|[[:space:]])' >/dev/null; then echo 'Close Premiere Pro before uninstalling.' >&2; exit 1; fi
 CEP_ROOT="$HOME/Library/Application Support/Adobe/CEP/extensions"
 DEST="$CEP_ROOT/ir.oteener.soundprime"
 DATA="$HOME/Library/Application Support/OTINER"

@@ -6,7 +6,7 @@ SOURCE="$ROOT/extension"
 DEST="$HOME/Library/Application Support/Adobe/CEP/extensions/ir.oteener.soundprime"
 DATA="$HOME/Library/Application Support/OTINER"
 DOMAIN='com.adobe.CSXS.11'
-if pgrep -x 'Adobe Premiere Pro' >/dev/null; then echo 'Close Premiere Pro before installing.' >&2; exit 1; fi
+if pgrep -f '/Contents/MacOS/Adobe Premiere Pro( [0-9]{4})?($|[[:space:]])' >/dev/null; then echo 'Close Premiere Pro before installing.' >&2; exit 1; fi
 [[ -f "$SOURCE/CSXS/manifest.xml" ]] || { echo 'Extract the entire ZIP before installing.' >&2; exit 1; }
 if [[ ! -f "$SOURCE/bin/OTINER.Hotkeys" ]]; then
   echo 'No prebuilt Mac companion. Building from source requires Xcode Command Line Tools.'

@@ -387,6 +387,7 @@
   }, true);
   $('help').onclick = () => {
     $('dialog-body').innerHTML = '<h2 id="dialog-title">OTINER</h2><ol><li>با «افزودن صدا» یا رها کردن فایل روی پد، تا ۹ ساند افکت انتخاب کن.</li><li>روی اسم هر پد بزن و نام دلخواهت را ذخیره کن. میان‌بر از سه‌نقطه تنظیم می‌شود.</li><li>روی موج یا «پریویو» بزن تا صدا را بشنوی؛ پخش‌کننده پایین پنل مکث، ادامه، توقف و جابه‌جایی داخل صدا دارد.</li><li>فایل KYS فعال پریمیر را برای بررسی تداخل وارد کن: Edit → Keyboard Shortcuts → Save As. فایل معمولاً در Documents/Adobe/Premiere Pro/24.0/Profile-…/Win است.</li><li>یک سکانس باز کن و ترک صوتی خالی را از TARGET انتخاب کن. نشانگر را جابه‌جا کن و «درج» یا میان‌بر صدا را بزن.</li></ol><p>پنل باید باز بماند. میان‌برها فقط هنگام فوکوس روی پریمیر فعال‌اند. روی ترک قفل‌شده یا بخش پُر صدا درج نمی‌شود. فایل‌های صدا جابه‌جا یا همراه بانک کپی نمی‌شوند.</p><p>بلندی VOL فقط پیش‌شنوی را تغییر می‌دهد. بانک و مسیر فایل‌ها روی همین سیستم ذخیره می‌شوند. اتصال اینترنت لازم نیست.</p><p>Premiere Pro 2024 روی Windows 10/11. برای Undo از Ctrl+Z خود پریمیر استفاده کن.</p>';
+    if (isMac) $('dialog-body').innerHTML = $('dialog-body').innerHTML.replace('Edit → Keyboard Shortcuts', 'Premiere Pro → Keyboard Shortcuts').replace('Profile-…/Win', 'Profile-…/Mac').replace('Windows 10/11', 'macOS 12+').replace('Ctrl+Z', 'Cmd+Z');
     showDialog();
   };
   $('kys').onclick = () => { pauseNative(true); $('kys-file').click(); };
