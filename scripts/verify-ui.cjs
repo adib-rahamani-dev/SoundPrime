@@ -44,7 +44,7 @@ function wave() {
     const xml = '<PremiereData><platform>windows</platform><item.0><commandname>cmd.test.conflict</commandname><modifier.ctrl>true</modifier.ctrl><modifier.alt>true</modifier.alt><virtualkey>2147483725</virtualkey></item.0></PremiereData>';
     await page.locator('#kys-file').setInputFiles({name:'test.kys', mimeType:'text/xml', buffer:Buffer.from(xml)});
     await page.waitForFunction(() => document.querySelector('.status').textContent === 'تداخل پریمیر');
-    await page.locator('.pad-trigger').first().click();
+    await page.locator('.insert').first().click();
     assert.match(await page.locator('#toast').textContent(), /پیش‌نمایش مرورگر/);
     await page.setViewportSize({width:360,height:820});
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);

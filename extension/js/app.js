@@ -13,7 +13,7 @@
   const configFile = fs ? path.join(dataDir, 'bank.json') : '';
   let state = Core.defaults(), nativeStatus = {}, kys = {}, kysLoaded = false;
   let helper = null, session = '', audio = null, audioContext = null;
-  let peaks = new Map(), browserFiles = new Map(), playing = -1, busy = false;
+  let peaks = new Map(), browserFiles = new Map(), playing = -1, lastPreview = -1, busy = false;
   let editing = -1, pendingShortcut = null, modalFocus = null, sequence = null, missing = new Set();
   let toastTimer, dialogKeyHandler = null, lastHeartbeat = 0, helperFailed = false;
   function toast(message, error) {
@@ -147,19 +147,25 @@
       const head = document.createElement('div'); head.className = 'pad-head';
       const num = document.createElement('span'); num.className = 'pad-number'; num.textContent = 'PAD / 0' + (i + 1);
       head.append(num, button('pad-edit', '···', 'تنظیم پد ' + (i + 1), () => editSlot(i))); el.append(head);
-      const trigger = button('pad-trigger', '', s.path ? 'درج ' + s.name + ' در تایم‌لاین' : 'افزودن صدا به پد ' + (i + 1), () => s.path ? place(i) : chooseAudio(i));
+      const trigger = button('pad-trigger', '', s.path ? 'پیش‌شنوی ' + s.name : 'افزودن صدا به پد ' + (i + 1), () => s.path ? preview(i) : chooseAudio(i));
       const wave = document.createElement('div'); wave.className = 'wave-wrap';
       if (s.path) {
         const canvas = document.createElement('canvas'); canvas.width = 360; canvas.height = 80; canvas.dataset.slot = i; wave.append(canvas);
       } else { const plus = document.createElement('span'); plus.className = 'empty-sign'; plus.textContent = '+'; wave.append(plus); }
-      const name = document.createElement('span'); name.className = 'pad-name'; name.textContent = s.name || 'صدای بعدی تو';
-      name.title = s.path || 'فایل صدا را اینجا رها کنید'; trigger.append(wave, name); el.append(trigger);
+      trigger.append(wave); el.append(trigger);
+      const name = button('pad-name', s.name || 'انتخاب اسم', 'تغییر نام پد ' + (i + 1), () => renameSlot(i));
+      name.dir = 'auto'; el.append(name);
       const meta = document.createElement('div'); meta.className = 'pad-meta';
       const detail = document.createElement('span');
       detail.textContent = s.path ? (missing.has(i) ? 'FILE MISSING' : s.path.split('.').pop().toUpperCase() + ' · ' + (s.duration ? s.duration.toFixed(2) + 's' : '—')) : 'DROP YOUR SOUND';
       meta.append(detail);
-      if (s.path) meta.append(button('preview', playing === i ? '■' : '▷', 'پیش‌شنوی ' + s.name, () => preview(i)));
       el.append(meta);
+      if (s.path) {
+        const actions = document.createElement('div'); actions.className = 'pad-actions';
+        actions.append(button('preview', playing === i ? 'توقف' : 'پریویو', 'پیش‌شنوی ' + s.name, () => preview(i)),
+          button('insert', 'درج', 'درج ' + s.name + ' در تایم‌لاین', () => place(i)));
+        el.append(actions);
+      }
       const bottom = document.createElement('div'); bottom.className = 'pad-bottom';
       bottom.append(button('shortcut', Core.label(s.shortcut), 'تنظیم میان‌بر پد ' + (i + 1), () => editSlot(i)));
       const status = document.createElement('span'); status.className = 'status'; bottom.append(status); el.append(bottom);
@@ -209,19 +215,33 @@
     points.forEach((v, n) => { const h = Math.max(3, v * 74); ctx.fillRect(n * 6.2, (80 - h) / 2, 3.4, h); });
   }
   function stop() {
-    if (audio) { audio.onended = null; audio.onerror = null; audio.pause(); audio.removeAttribute('src'); audio.load(); audio = null; }
-    playing = -1; $('now-playing').textContent = 'صدایی در حال پخش نیست'; render();
+    if (audio) { audio.onended = null; audio.onerror = null; audio.ontimeupdate = null; audio.onloadedmetadata = null; audio.pause(); audio.removeAttribute('src'); audio.load(); audio = null; }
+    playing = -1; $('now-playing').textContent = 'یک صدا را برای شنیدن انتخاب کن'; updateMonitor(); render();
+  }
+  function clock(seconds) {
+    if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
+    return Math.floor(seconds / 60) + ':' + String(Math.floor(seconds % 60)).padStart(2, '0');
+  }
+  function updateMonitor() {
+    const duration = audio && Number.isFinite(audio.duration) ? audio.duration : 0;
+    const current = audio ? audio.currentTime : 0;
+    $('preview-position').disabled = !duration;
+    $('preview-position').value = duration ? Math.round(current / duration * 1000) : 0;
+    $('preview-time').textContent = clock(current) + ' / ' + clock(duration);
+    $('preview-play').disabled = lastPreview < 0 || !state.slots[lastPreview].path;
+    $('preview-play').textContent = audio && !audio.paused ? 'مکث' : 'پخش';
   }
   async function preview(i) {
     if (playing === i) { stop(); return; }
     stop();
     let current;
     try {
-      current = new Audio(getURL(i)); audio = current; audio.volume = state.volume; playing = i;
+      current = new Audio(getURL(i)); audio = current; audio.volume = state.volume; playing = i; lastPreview = i;
+      current.ontimeupdate = updateMonitor; current.onloadedmetadata = updateMonitor;
       current.onended = () => { if (audio === current) stop(); };
       current.onerror = () => { if (audio === current) { stop(); toast('پیش‌شنوی این فرمت ممکن نشد؛ WAV یا MP3 را امتحان کنید.', true); } };
       await current.play();
-      if (audio === current) { $('now-playing').textContent = state.slots[i].name; render(); }
+      if (audio === current) { $('now-playing').textContent = state.slots[i].name; updateMonitor(); render(); }
     } catch (e) { if (!current || audio === current) { stop(); toast(e.message, true); } }
   }
   async function place(i) {
@@ -246,8 +266,12 @@
       if (i < 0) return;
       const p = fs ? f.path : f.name;
       if (!p) return;
+      const previous = state.slots[i];
+      const previousFileName = previous.path.split(/[\\/]/).pop().replace(/\.[^.]+$/, '');
+      const chosenName = previous.name && previous.name !== previousFileName ? previous.name : f.name.replace(/\.[^.]+$/, '');
+      if (playing === i) stop();
       if (!fs) { const old = browserFiles.get(p); if (old) URL.revokeObjectURL(old.url); browserFiles.set(p, {file: f, url: URL.createObjectURL(f)}); }
-      state.slots[i] = { path: p, name: f.name.replace(/\.[^.]+$/, ''), duration: 0, shortcut: state.slots[i].shortcut };
+      state.slots[i] = { path: p, name: chosenName, duration: 0, shortcut: previous.shortcut };
       missing.delete(i); peaks.delete(p); added++;
     });
     save(); render(); toast(added + ' صدا اضافه شد.' + (added < supported.length ? ' ظرفیت بانک ۹ صداست.' : ''));
@@ -292,6 +316,18 @@
     $('clear-slot').onclick = () => { stop(); state.slots[i] = {path: '', name: '', duration: 0, shortcut: state.slots[i].shortcut}; missing.delete(i); save(); closeDialog(); render(); };
     feedback(); showDialog();
   }
+  function renameSlot(i) {
+    $('dialog-body').innerHTML = '<h2 id="dialog-title">اسم این صدا چی باشه؟</h2><p>اسم دلخواهت روی پد و پخش‌کننده نمایش داده می‌شود.</p><form id="rename-form"><label for="rename-input">نام صدا</label><input id="rename-input" type="text" maxlength="80" dir="auto" autocomplete="off"><div class="dialog-actions"><button type="submit" class="primary">ذخیره اسم</button><button type="button" id="cancel-rename" class="secondary">انصراف</button></div></form>';
+    $('rename-input').value = state.slots[i].name;
+    $('rename-form').onsubmit = e => {
+      e.preventDefault();
+      const s = state.slots[i]; s.name = $('rename-input').value.trim() || (s.path ? s.path.split(/[\\/]/).pop().replace(/\.[^.]+$/, '') : '');
+      if (playing === i) $('now-playing').textContent = s.name;
+      save(); closeDialog(); render(); toast('اسم صدا ذخیره شد.');
+    };
+    $('cancel-rename').onclick = closeDialog;
+    showDialog();
+  }
   async function refreshHost() {
     if (!isCEP || busy || !$('modal').hidden) return;
     try {
@@ -310,6 +346,15 @@
   window.addEventListener('focus', () => { if ($('modal').hidden) pauseNative(false); });
   $('enabled').onclick = () => { state.enabled = !state.enabled; save(); render(); };
   $('stop').onclick = stop;
+  $('preview-play').onclick = async () => {
+    if (!audio) { if (lastPreview >= 0) preview(lastPreview); return; }
+    const current = audio;
+    try { if (current.paused) await current.play(); else current.pause(); updateMonitor(); }
+    catch (e) { if (audio === current) { stop(); toast(e.message, true); } }
+  };
+  $('preview-position').oninput = e => {
+    if (audio && Number.isFinite(audio.duration) && audio.duration > 0) { audio.currentTime = Number(e.target.value) / 1000 * audio.duration; updateMonitor(); }
+  };
   $('volume').oninput = e => { state.volume = Number(e.target.value) / 100; $('volume-value').textContent = e.target.value + '%'; if (audio) audio.volume = state.volume; };
   $('volume').onchange = save;
   $('track').onchange = e => { state.track = Number(e.target.value); save(); };
@@ -334,7 +379,7 @@
     if (i >= 0) { e.preventDefault(); place(i); }
   }, true);
   $('help').onclick = () => {
-    $('dialog-body').innerHTML = '<h2 id="dialog-title">صدای خوب، سریع‌تر.</h2><ol><li>با «افزودن صدا» یا رها کردن فایل روی پد، تا ۹ ساند افکت انتخاب کن.</li><li>از منوی سه‌نقطه، نام و میان‌بر هر پد را تنظیم کن.</li><li>فایل KYS فعال پریمیر را برای بررسی تداخل وارد کن: Edit → Keyboard Shortcuts → Save As. فایل معمولاً در Documents/Adobe/Premiere Pro/24.0/Profile-…/Win است.</li><li>یک سکانس باز کن و ترک صوتی خالی را از TARGET انتخاب کن.</li><li>نشانگر را جابه‌جا کن؛ روی پد یا میان‌برش بزن. دکمهٔ ▷ فقط پیش‌شنوی است.</li></ol><p>پنل باید باز بماند. میان‌برها فقط هنگام فوکوس روی پریمیر فعال‌اند. روی ترک قفل‌شده یا بخش پُر صدا درج نمی‌شود. فایل‌های صدا جابه‌جا یا همراه بانک کپی نمی‌شوند.</p><p>بلندی VOL فقط پیش‌شنوی را تغییر می‌دهد. بانک و مسیر فایل‌ها روی همین سیستم ذخیره می‌شوند. اتصال اینترنت لازم نیست.</p><p>هدف نسخهٔ اول: Premiere Pro 2024 روی Windows 10/11. برای Undo از Ctrl+Z خود پریمیر استفاده کن.</p>';
+    $('dialog-body').innerHTML = '<h2 id="dialog-title">OTINER</h2><ol><li>با «افزودن صدا» یا رها کردن فایل روی پد، تا ۹ ساند افکت انتخاب کن.</li><li>روی اسم هر پد بزن و نام دلخواهت را ذخیره کن. میان‌بر از سه‌نقطه تنظیم می‌شود.</li><li>روی موج یا «پریویو» بزن تا صدا را بشنوی؛ پخش‌کننده پایین پنل مکث، ادامه، توقف و جابه‌جایی داخل صدا دارد.</li><li>فایل KYS فعال پریمیر را برای بررسی تداخل وارد کن: Edit → Keyboard Shortcuts → Save As. فایل معمولاً در Documents/Adobe/Premiere Pro/24.0/Profile-…/Win است.</li><li>یک سکانس باز کن و ترک صوتی خالی را از TARGET انتخاب کن. نشانگر را جابه‌جا کن و «درج» یا میان‌بر صدا را بزن.</li></ol><p>پنل باید باز بماند. میان‌برها فقط هنگام فوکوس روی پریمیر فعال‌اند. روی ترک قفل‌شده یا بخش پُر صدا درج نمی‌شود. فایل‌های صدا جابه‌جا یا همراه بانک کپی نمی‌شوند.</p><p>بلندی VOL فقط پیش‌شنوی را تغییر می‌دهد. بانک و مسیر فایل‌ها روی همین سیستم ذخیره می‌شوند. اتصال اینترنت لازم نیست.</p><p>Premiere Pro 2024 روی Windows 10/11. برای Undo از Ctrl+Z خود پریمیر استفاده کن.</p>';
     showDialog();
   };
   $('kys').onclick = () => { pauseNative(true); $('kys-file').click(); };
@@ -349,12 +394,12 @@
   };
   $('export-bank').onclick = () => {
     const blob = new Blob([JSON.stringify(state, null, 2)], {type: 'application/json'}), url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = 'Oteener-sound-bank.json';
+    const a = document.createElement('a'); a.href = url; a.download = 'OTINER-sound-bank.json';
     // CEP downloads are unreliable; use the native save dialog instead.
     if (isCEP && window.cep && window.cep.fs) {
       pauseNative(true);
       try {
-        const dialog = window.cep.fs.showSaveDialogEx('Save sound bank', '', ['json'], 'Oteener-sound-bank.json');
+        const dialog = window.cep.fs.showSaveDialogEx('Save sound bank', '', ['json'], 'OTINER-sound-bank.json');
         if (dialog.err === 0 && dialog.data) fs.writeFileSync(dialog.data, JSON.stringify(state, null, 2), 'utf8');
       } catch (e) { toast(e.message, true); } finally { pauseNative(false); }
     } else { document.body.append(a); a.click(); a.remove(); }

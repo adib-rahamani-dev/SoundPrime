@@ -33,8 +33,8 @@ try {
     New-Item -Path $registryPath -Force | Out-Null
     New-ItemProperty -Path $registryPath -Name PlayerDebugMode -PropertyType String -Value '1' -Force | Out-Null
     Write-Host ''
-    Write-Host 'Oteener Sound Design installed successfully.' -ForegroundColor Yellow
-    Write-Host 'Open Premiere Pro 2024 > Window > Extensions > Oteener Sound Design.'
+    Write-Host 'OTINER installed successfully.' -ForegroundColor Yellow
+    Write-Host 'Open Premiere Pro 2024 > Window > Extensions > OTINER.'
     Write-Host "Installed at: $extensionTarget"
     Write-Host 'This unsigned CEP panel uses per-user CSXS.11 PlayerDebugMode=1.'
     Write-Host 'No administrator rights, network downloads, or Windows startup entries are needed.'

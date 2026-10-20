@@ -14,9 +14,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - run: npm ci
       - run: npm test
       - run: npm run build
       - uses: actions/upload-artifact@v4
         with:
-          name: SoundPrime-Windows
-          path: dist/SoundPrime-1.0.0-Windows.zip
+          name: OTINER-Windows
+          path: dist/OTINER-1.1.0-Windows.zip

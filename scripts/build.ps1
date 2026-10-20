@@ -12,7 +12,7 @@ New-Item -ItemType Directory -Path $stage | Out-Null
 foreach ($item in @('extension','installer','docs','Install.cmd','Uninstall.cmd','README.md','LICENSE')) {
     Copy-Item -LiteralPath (Join-Path $projectRoot $item) -Destination $stage -Recurse -Force
 }
-$zip = Join-Path $dist 'SoundPrime-1.0.0-Windows.zip'
+$zip = Join-Path $dist 'OTINER-1.1.0-Windows.zip'
 Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $zip -Force
 # Only remove the verified staging directory created by this invocation.
 $resolvedStage = [IO.Path]::GetFullPath($stage)

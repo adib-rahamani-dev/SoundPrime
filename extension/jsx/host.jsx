@@ -35,9 +35,9 @@ var SoundPrime = (function () {
                 var bin = null;
                 for (var b = 0; b < app.project.rootItem.children.numItems; b++) {
                     var candidate = app.project.rootItem.children[b];
-                    if (candidate.type === ProjectItemType.BIN && candidate.name === 'Oteener Sound Design') { bin = candidate; break; }
+                    if (candidate.type === ProjectItemType.BIN && candidate.name === 'OTINER') { bin = candidate; break; }
                 }
-                if (!bin) bin = app.project.rootItem.createBin('Oteener Sound Design');
+                if (!bin) bin = app.project.rootItem.createBin('OTINER');
                 if (!app.project.importFiles([file.fsName], true, bin, false)) return fail('پریمیر نتوانست فایل را وارد کند.');
                 item = find(bin, file.fsName);
             }

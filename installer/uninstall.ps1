@@ -20,7 +20,7 @@ try {
         }
         Remove-Item -LiteralPath $record -Force
     }
-    Write-Host 'Oteener Sound Design removed. Your sound bank and audio files were kept.' -ForegroundColor Yellow
+    Write-Host 'OTINER removed. Your sound bank and audio files were kept.' -ForegroundColor Yellow
     if (-not $Quiet) { Read-Host 'Press Enter to finish' | Out-Null }
 } catch {
     Write-Host $_.Exception.Message -ForegroundColor Red
