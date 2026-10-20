@@ -4,11 +4,12 @@ const fs = require('node:fs');
 const {JSDOM} = require('jsdom');
 
 // Offline DOM tests: no browser, external resources, network, or user files.
-function panel(saved) {
+function panel(saved, platform = 'Win32') {
   const dom = new JSDOM(fs.readFileSync('extension/index.html', 'utf8'), {
     url: 'https://otiner.test/', runScripts: 'outside-only'
   });
   const w = dom.window;
+  Object.defineProperty(w.navigator, 'platform', {value:platform});
   if (saved) w.localStorage.setItem('soundprime-bank', saved);
   w.HTMLCanvasElement.prototype.getContext = () => ({clearRect() {}, fillRect() {}});
   w.URL.createObjectURL = () => 'blob:test-audio'; w.URL.revokeObjectURL = () => {};
@@ -96,5 +97,20 @@ test('rename cancellation and empty name fallback preserve sound and shortcut', 
     p.$('#rename-form').dispatchEvent(new p.w.Event('submit', {cancelable:true}));
     assert.equal(p.$('.pad-name').textContent, 'impact');
     assert.equal(p.$('.shortcut').textContent, before);
+  } finally { p.close(); }
+});
+test('Mac panel captures Command and checks the active Mac KYS without Windows labels', async () => {
+  const p = panel(null, 'MacIntel');
+  try {
+    assert.equal(p.$('.shortcut').textContent, 'Cmd + Shift + 1');
+    p.$('.pad-edit').click(); p.$('#recorder').focus();
+    p.$('#recorder').dispatchEvent(new p.w.KeyboardEvent('keydown', {code:'KeyM',key:'m',metaKey:true,altKey:true,bubbles:true,cancelable:true}));
+    assert.equal(p.$('#recorder').textContent, 'Cmd + Option + M');
+    assert.equal(p.$('#save-slot').disabled, false);
+    p.$('#save-slot').click();
+    assert.equal(p.$('.shortcut').textContent, 'Cmd + Option + M');
+    p.upload('mac.kys', '#kys-file', '<PremiereData><platform>macintosh</platform><item.0><virtualkey>2147483725</virtualkey><modifier.command>true</modifier.command><modifier.opt>true</modifier.opt><commandname>cmd.mac.test</commandname></item.0></PremiereData>');
+    await tick();
+    assert.equal(p.$('.status').textContent, 'تداخل پریمیر');
   } finally { p.close(); }
 });

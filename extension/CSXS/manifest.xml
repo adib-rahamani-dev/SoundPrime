@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ExtensionManifest Version="7.0" ExtensionBundleId="ir.oteener.soundprime" ExtensionBundleVersion="1.1.0" ExtensionBundleName="OTINER">
-  <ExtensionList><Extension Id="ir.oteener.soundprime.panel" Version="1.1.0" /></ExtensionList>
+<ExtensionManifest Version="7.0" ExtensionBundleId="ir.oteener.soundprime" ExtensionBundleVersion="1.2.0" ExtensionBundleName="OTINER">
+  <ExtensionList><Extension Id="ir.oteener.soundprime.panel" Version="1.2.0" /></ExtensionList>
   <ExecutionEnvironment>
     <HostList><Host Name="PPRO" Version="[24.0,24.9]" /></HostList>
     <LocaleList><Locale Code="All" /></LocaleList>

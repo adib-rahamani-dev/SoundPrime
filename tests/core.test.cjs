@@ -30,3 +30,20 @@ test('KYS maps Windows high-bit VK and Adobe F-key codes, all contexts', () => {
   assert.throws(() => Core.parseKys('<html>not KYS</html>'));
   assert.throws(() => Core.parseKys('<PremiereData><platform>mac</platform></PremiereData>'));
 });
+test('Mac shortcuts default to Command and retain Option/Control independently', () => {
+  const mac = Core.defaults(true);
+  assert.equal(Core.label(mac.slots[0].shortcut, true), 'Cmd + Shift + 1');
+  assert.equal(Core.label({key:77,modifiers:15}, true), 'Cmd + Ctrl + Option + Shift + M');
+  assert.equal(Core.validShortcut({key:77,modifiers:12}, true), true);
+  assert.equal(Core.validShortcut({key:77,modifiers:12}), false);
+  assert.equal(Core.validShortcut({key:77,modifiers:5}, true), false);
+  assert.equal(Core.normalize(mac, true).slots[0].shortcut.modifiers, 12);
+  assert.throws(() => Core.normalize(mac));
+});
+test('Mac KYS uses macintosh, command and opt; cross-platform KYS is rejected', () => {
+  const xml = '<PremiereData><platform>macintosh</platform><item.0><virtualkey>2147483731</virtualkey><modifier.command>true</modifier.command><modifier.opt>true</modifier.opt><modifier.ctrl>false</modifier.ctrl><modifier.shift>true</modifier.shift><commandname>cmd.file.saveas</commandname></item.0><item.1><virtualkey>7</virtualkey><modifier.ctrl>true</modifier.ctrl><commandname>cmd.help</commandname></item.1></PremiereData>';
+  assert.equal(Core.parseKys(xml, true)['13:83'], 'cmd.file.saveas');
+  assert.equal(Core.parseKys(xml, true)['2:112'], 'cmd.help');
+  assert.throws(() => Core.parseKys(xml));
+  assert.throws(() => Core.parseKys('<PremiereData><platform>windows</platform></PremiereData>', true));
+});

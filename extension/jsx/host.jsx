@@ -7,7 +7,11 @@ var SoundPrime = (function () {
         for (var i = 0; i < parent.children.numItems; i++) {
             var child = parent.children[i];
             if (child.type === ProjectItemType.BIN) { var nested = find(child, path); if (nested) return nested; }
-            else if (child.getMediaPath && new File(child.getMediaPath()).fsName.toLowerCase() === path.toLowerCase()) return child;
+            else if (child.getMediaPath) {
+                var mediaPath = new File(child.getMediaPath()).fsName;
+                var windows = typeof Folder === 'undefined' || Folder.fs === 'Windows';
+                if (windows ? mediaPath.toLowerCase() === path.toLowerCase() : mediaPath === path) return child;
+            }
         }
         return null;
     }

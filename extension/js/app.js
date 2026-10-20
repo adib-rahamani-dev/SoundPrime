@@ -6,12 +6,14 @@
   const fs = isCEP && req ? req('fs') : null;
   const path = fs ? req('path') : null;
   const nodeProcess = fs ? req('process') : null;
+  const isMac = nodeProcess ? nodeProcess.platform === 'darwin' : /Mac/.test(navigator.platform);
+  const shortcutLabel = s => Core.label(s, isMac);
   const childProcess = fs ? req('child_process') : null;
   const fileURL = fs ? req('url').pathToFileURL : null;
   const root = fs ? path.dirname(decodeURIComponent(location.pathname).replace(/^\/(\w:)/, '$1')) : '';
-  const dataDir = fs ? path.join(nodeProcess.env.APPDATA, 'Oteener', 'SoundPrime') : '';
+  const dataDir = fs ? (isMac ? path.join(req('os').homedir(), 'Library', 'Application Support', 'OTINER') : path.join(nodeProcess.env.APPDATA, 'Oteener', 'SoundPrime')) : '';
   const configFile = fs ? path.join(dataDir, 'bank.json') : '';
-  let state = Core.defaults(), nativeStatus = {}, kys = {}, kysLoaded = false;
+  let state = Core.defaults(isMac), nativeStatus = {}, kys = {}, kysLoaded = false;
   let helper = null, session = '', audio = null, audioContext = null;
   let peaks = new Map(), browserFiles = new Map(), playing = -1, lastPreview = -1, busy = false;
   let editing = -1, pendingShortcut = null, modalFocus = null, sequence = null, missing = new Set();
@@ -24,10 +26,10 @@
     try {
       if (fs) {
         fs.mkdirSync(dataDir, { recursive: true });
-        if (fs.existsSync(configFile)) state = Core.normalize(JSON.parse(fs.readFileSync(configFile, 'utf8')));
+        if (fs.existsSync(configFile)) state = Core.normalize(JSON.parse(fs.readFileSync(configFile, 'utf8')), isMac);
       } else {
         const saved = localStorage.getItem('soundprime-bank');
-        if (saved) state = Core.normalize(JSON.parse(saved));
+        if (saved) state = Core.normalize(JSON.parse(saved), isMac);
       }
     } catch (e) { toast('بانک ذخیره‌شده خوانده نشد؛ نسخهٔ قبلی در پوشهٔ تنظیمات نگه داشته شده است.', true); }
   }
@@ -78,7 +80,7 @@
       session = fs.mkdtempSync(path.join(req('os').tmpdir(), 'soundprime-'));
       fs.writeFileSync(path.join(session, 'heartbeat'), '1');
       syncNative();
-      const exe = path.join(root, 'bin', 'SoundPrime.Hotkeys.exe');
+      const exe = path.join(root, 'bin', isMac ? 'OTINER.Hotkeys' : 'SoundPrime.Hotkeys.exe');
       if (!fs.existsSync(exe)) throw new Error('همراه میان‌بر نصب نشده؛ نصب‌کننده را دوباره اجرا کنید.');
       helper = childProcess.spawn(exe, [session], { windowsHide: true, stdio: 'ignore' });
       helper.on('error', e => { helperFailed = true; renderStatus(); toast(e.message, true); });
@@ -108,7 +110,7 @@
   function loadKys() {
     kys = {}; kysLoaded = false;
     if (fs && state.kysPath) {
-      try { kys = Core.parseKys(fs.readFileSync(state.kysPath, 'utf8')); kysLoaded = true; }
+      try { kys = Core.parseKys(fs.readFileSync(state.kysPath, 'utf8'), isMac); kysLoaded = true; }
       catch (e) { toast('فایل میان‌بر پریمیر خوانده نشد. برای بررسی دوباره آن را انتخاب کنید.', true); }
     }
   }
@@ -119,7 +121,8 @@
     if (kys[Core.shortcutId(s.shortcut)]) return ['تداخل پریمیر', 'error'];
     if (!fs) return ['پیش‌نمایش', 'warn'];
     if (helperFailed) return ['همراه قطع است', 'error'];
-    if (nativeStatus[i] === 'conflict') return ['اشغال در ویندوز', 'error'];
+    if (nativeStatus[i] === 'conflict') return [isMac ? 'اشغال در مک' : 'اشغال در ویندوز', 'error'];
+    if (nativeStatus[i] === 'unavailable') return ['ثبت میان‌بر ناموفق', 'error'];
     if (!nativeStatus[i]) return ['در حال بررسی', ''];
     if (!kysLoaded) return ['KYS بررسی نشده', 'warn'];
     return [nativeStatus[i] === 'active' ? 'آماده ✓' : 'آزاد ✓', 'ok'];
@@ -167,7 +170,7 @@
         el.append(actions);
       }
       const bottom = document.createElement('div'); bottom.className = 'pad-bottom';
-      bottom.append(button('shortcut', Core.label(s.shortcut), 'تنظیم میان‌بر پد ' + (i + 1), () => editSlot(i)));
+      bottom.append(button('shortcut', shortcutLabel(s.shortcut), 'تنظیم میان‌بر پد ' + (i + 1), () => editSlot(i)));
       const status = document.createElement('span'); status.className = 'status'; bottom.append(status); el.append(bottom);
       el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('dragover'); });
       el.addEventListener('dragleave', () => el.classList.remove('dragover'));
@@ -287,7 +290,11 @@
   function editSlot(i) {
     editing = i; pendingShortcut = state.slots[i].shortcut ? Object.assign({}, state.slots[i].shortcut) : null;
     $('dialog-body').innerHTML = '<h2 id="dialog-title">تنظیم پد ۰' + (i + 1) + '</h2><label for="slot-name">نام صدا</label><input id="slot-name" type="text" maxlength="80"><label>میان‌بر دلخواه</label><div id="recorder" class="record" tabindex="0" role="button" aria-label="برای ضبط میان‌بر فوکوس کنید"></div><p class="hint">روی کادر بالا کلیک کنید و Ctrl، Alt یا Shift را همراه یک حرف انگلیسی، عدد یا F1 تا F12 بزنید.</p><div id="key-feedback" class="feedback" role="status"></div><p class="hint">تداخل پریمیر فقط با فایل KYS انتخاب‌شده بررسی می‌شود. میان‌بر ویندوز ممکن است تا زمان آزاد شدن برنامهٔ دیگر اشغال باشد.</p><div class="dialog-actions"><button id="save-slot" class="primary">ذخیره</button><button id="replace-slot" class="secondary">انتخاب صدا</button><button id="clear-slot" class="secondary danger">پاک کردن صدا</button></div><button id="clear-key" class="secondary">حذف میان‌بر</button>';
-    $('slot-name').value = state.slots[i].name; $('recorder').textContent = Core.label(pendingShortcut);
+    $('slot-name').value = state.slots[i].name; $('recorder').textContent = shortcutLabel(pendingShortcut);
+    if (isMac) {
+      $('dialog-body').querySelector('.hint').textContent = 'روی کادر بالا کلیک کنید و Cmd یا Ctrl را همراه یک حرف انگلیسی، عدد یا F1 تا F12 بزنید. Option و Shift هم قابل ترکیب‌اند.';
+      $('dialog-body').querySelectorAll('.hint')[1].textContent = 'تداخل پریمیر با فایل KYS مک انتخاب‌شده بررسی می‌شود. کلید رزروشدهٔ سیستم یا برنامهٔ دیگر ممکن است ثبت نشود.';
+    }
     function feedback() {
       const dup = pendingShortcut ? Core.conflict(state.slots, pendingShortcut, i) : -1;
       const command = pendingShortcut ? kys[Core.shortcutId(pendingShortcut)] : '';
@@ -303,15 +310,15 @@
       if (/^Key[A-Z]$/.test(e.code)) key = e.code.charCodeAt(3);
       else if (/^Digit[0-9]$/.test(e.code)) key = e.code.charCodeAt(5);
       else if (/^F([1-9]|1[0-2])$/.test(e.code)) key = 111 + Number(e.code.slice(1));
-      const s = {key: key, modifiers: (e.ctrlKey ? 2 : 0) | (e.altKey ? 1 : 0) | (e.shiftKey ? 4 : 0)};
-      if (e.metaKey || !Core.validShortcut(s)) { $('key-feedback').textContent = 'یک کلید پشتیبانی‌شده همراه Ctrl، Alt یا Shift بزنید.'; return; }
-      pendingShortcut = s; $('recorder').textContent = Core.label(s); feedback();
+      const s = {key: key, modifiers: (e.ctrlKey ? 2 : 0) | (e.altKey ? 1 : 0) | (e.shiftKey ? 4 : 0) | (isMac && e.metaKey ? 8 : 0)};
+      if ((!isMac && e.metaKey) || !Core.validShortcut(s, isMac)) { $('key-feedback').textContent = isMac ? 'یک کلید پشتیبانی‌شده همراه Cmd یا Ctrl بزنید.' : 'یک کلید پشتیبانی‌شده همراه Ctrl، Alt یا Shift بزنید.'; return; }
+      pendingShortcut = s; $('recorder').textContent = shortcutLabel(s); feedback();
     };
     $('save-slot').onclick = () => {
       state.slots[i].name = $('slot-name').value.trim() || (state.slots[i].path ? state.slots[i].path.split(/[\\/]/).pop().replace(/\.[^.]+$/, '') : '');
-      state.slots[i].shortcut = pendingShortcut; save(); closeDialog(); render(); toast('تنظیمات پد ذخیره شد؛ وضعیت ویندوز روی پد نمایش داده می‌شود.');
+      state.slots[i].shortcut = pendingShortcut; save(); closeDialog(); render(); toast('تنظیمات پد ذخیره شد؛ وضعیت میان‌بر روی پد نمایش داده می‌شود.');
     };
-    $('clear-key').onclick = () => { pendingShortcut = null; $('recorder').textContent = Core.label(null); feedback(); };
+    $('clear-key').onclick = () => { pendingShortcut = null; $('recorder').textContent = shortcutLabel(null); feedback(); };
     $('replace-slot').onclick = () => { closeDialog(); chooseAudio(i); };
     $('clear-slot').onclick = () => { stop(); state.slots[i] = {path: '', name: '', duration: 0, shortcut: state.slots[i].shortcut}; missing.delete(i); save(); closeDialog(); render(); };
     feedback(); showDialog();
@@ -374,7 +381,7 @@
     }
     // Native companion handles CEP keypresses once, including when timeline has focus.
     if (isCEP || !state.enabled || e.repeat || /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) return;
-    const shortcut = {key: e.keyCode, modifiers: (e.ctrlKey ? 2 : 0) | (e.altKey ? 1 : 0) | (e.shiftKey ? 4 : 0)};
+    const shortcut = {key: e.keyCode, modifiers: (e.ctrlKey ? 2 : 0) | (e.altKey ? 1 : 0) | (e.shiftKey ? 4 : 0) | (isMac && e.metaKey ? 8 : 0)};
     const i = state.slots.findIndex(s => s.shortcut && Core.shortcutId(s.shortcut) === Core.shortcutId(shortcut));
     if (i >= 0) { e.preventDefault(); place(i); }
   }, true);
@@ -387,7 +394,7 @@
     pauseNative(false); const f = e.target.files[0]; if (!f) return;
     try {
       const text = fs ? fs.readFileSync(f.path, 'utf8') : await f.text();
-      const parsed = Core.parseKys(text); if (!Object.keys(parsed).length) throw new Error('این فایل هیچ میان‌بری ندارد.');
+      const parsed = Core.parseKys(text, isMac); if (!Object.keys(parsed).length) throw new Error('این فایل هیچ میان‌بری ندارد.');
       kys = parsed; kysLoaded = true; state.kysPath = fs ? f.path : ''; save(); render();
       toast('میان‌برها با «' + f.name + '» بررسی شدند؛ فایل باید همان تنظیم فعال پریمیر باشد.');
     } catch (err) { toast(err.message, true); } finally { e.target.value = ''; }
@@ -409,7 +416,7 @@
   $('bank-file').onchange = async e => {
     pauseNative(false); const f = e.target.files[0]; if (!f) return;
     try {
-      const next = Core.normalize(JSON.parse(fs ? fs.readFileSync(f.path, 'utf8') : await f.text()));
+      const next = Core.normalize(JSON.parse(fs ? fs.readFileSync(f.path, 'utf8') : await f.text()), isMac);
       stop(); state = next; peaks.clear(); missing.clear(); loadKys(); save(); render(); refreshHost(); toast('بانک صدا بازیابی شد. مسیر فایل‌ها باید روی این سیستم موجود باشد.');
     } catch (err) { toast(err.message, true); } finally { e.target.value = ''; }
   };
